@@ -1,74 +1,126 @@
-import { genreColors } from '../data/musicData'
+import { useEffect, useState } from 'react'
+import { genreColors, MAX_PLAY } from '../data/musicData'
 
 export default function InfoPanel({ data, onClose }) {
+  const [visible, setVisible] = useState(false)
   const color = genreColors[data.genre] || { neon: '#ffffff' }
+
+  useEffect(() => {
+    requestAnimationFrame(() => setVisible(true))
+    return () => setVisible(false)
+  }, [data])
 
   return (
     <div
-      className="absolute bottom-8 left-1/2 -translate-x-1/2 pointer-events-auto"
+      className="absolute top-0 right-0 bottom-0 flex items-center pointer-events-none"
       style={{ zIndex: 100 }}
     >
       <div
-        className="relative rounded-lg px-8 py-5 min-w-64 text-center"
+        className="pointer-events-auto mr-6 w-80 transition-all duration-500 ease-out"
         style={{
-          background: 'rgba(2, 0, 12, 0.92)',
-          border: `1.5px solid ${color.neon}`,
-          boxShadow: `0 0 24px ${color.neon}55, 0 0 60px ${color.neon}22, inset 0 0 20px ${color.neon}08`,
-          backdropFilter: 'blur(12px)',
+          transform: visible ? 'translateX(0)' : 'translateX(120%)',
+          opacity: visible ? 1 : 0,
         }}
       >
-        {/* Genre badge */}
         <div
-          className="text-xs font-bold tracking-widest mb-2 uppercase"
-          style={{ color: color.neon, textShadow: `0 0 10px ${color.neon}` }}
+          className="rounded-xl p-6 relative overflow-hidden"
+          style={{
+            background: 'rgba(2, 0, 15, 0.95)',
+            border: `1px solid ${color.neon}33`,
+            boxShadow: `0 0 40px ${color.neon}22, 0 0 80px ${color.neon}11, inset 0 1px 0 ${color.neon}15`,
+            backdropFilter: 'blur(20px)',
+          }}
         >
-          {data.genre} District
-        </div>
+          {/* Accent glow line at top */}
+          <div
+            className="absolute top-0 left-0 right-0 h-px"
+            style={{ background: `linear-gradient(90deg, transparent, ${color.neon}, transparent)` }}
+          />
 
-        {/* Artist */}
-        <div
-          className="text-2xl font-black tracking-tight mb-1"
-          style={{ color: '#ffffff', textShadow: `0 0 20px ${color.neon}` }}
-        >
-          {data.artist}
-        </div>
-
-        {/* Top track */}
-        <div className="text-sm text-gray-400 mb-3">
-          Top Track:{' '}
-          <span className="font-semibold" style={{ color: color.neon }}>
-            {data.topTrack}
-          </span>
-        </div>
-
-        {/* Play count bar */}
-        <div className="flex items-center gap-3 justify-center mb-1">
-          <span className="text-gray-500 text-xs uppercase tracking-wider">Plays</span>
-          <div className="flex-1 max-w-32 h-1.5 bg-gray-800 rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-700"
-              style={{
-                width: `${(data.playCount / 847) * 100}%`,
-                background: `linear-gradient(90deg, ${color.neon}88, ${color.neon})`,
-                boxShadow: `0 0 8px ${color.neon}`,
-              }}
-            />
-          </div>
-          <span
-            className="text-lg font-bold tabular-nums"
-            style={{ color: color.neon, textShadow: `0 0 8px ${color.neon}` }}
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-6 h-6 flex items-center justify-center rounded-full text-gray-600 hover:text-white transition-colors text-sm"
+            style={{ border: '1px solid #333' }}
           >
-            {data.playCount.toLocaleString()}
-          </span>
-        </div>
+            x
+          </button>
 
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 text-gray-600 hover:text-white transition-colors text-lg leading-none"
-        >
-          ×
-        </button>
+          {/* Genre badge */}
+          <div
+            className="inline-block text-[10px] font-bold tracking-[0.2em] mb-3 px-2.5 py-1 rounded-full uppercase"
+            style={{
+              color: color.neon,
+              border: `1px solid ${color.neon}44`,
+              background: `${color.neon}08`,
+              textShadow: `0 0 10px ${color.neon}`,
+            }}
+          >
+            {data.genre}
+          </div>
+
+          {/* Artist name */}
+          <h2
+            className="text-2xl font-black tracking-tight mb-1"
+            style={{
+              color: '#ffffff',
+              textShadow: `0 0 30px ${color.neon}55`,
+            }}
+          >
+            {data.artist}
+          </h2>
+
+          {/* Top track */}
+          <p className="text-sm text-gray-500 mb-5">
+            Top Track:{' '}
+            <span className="font-medium" style={{ color: color.neon }}>
+              {data.topTrack}
+            </span>
+          </p>
+
+          {/* Play count */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-baseline">
+              <span className="text-gray-600 text-[10px] uppercase tracking-[0.2em]">Total Plays</span>
+              <span
+                className="text-2xl font-black tabular-nums"
+                style={{ color: color.neon, textShadow: `0 0 12px ${color.neon}88` }}
+              >
+                {data.playCount.toLocaleString()}
+              </span>
+            </div>
+            <div className="h-1 bg-gray-900 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-1000 ease-out"
+                style={{
+                  width: visible ? `${(data.playCount / MAX_PLAY) * 100}%` : '0%',
+                  background: `linear-gradient(90deg, ${color.neon}44, ${color.neon})`,
+                  boxShadow: `0 0 10px ${color.neon}88`,
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Building height indicator */}
+          <div className="mt-4 pt-4" style={{ borderTop: '1px solid #ffffff08' }}>
+            <div className="flex items-center gap-3">
+              <div className="flex gap-0.5">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-1.5 rounded-sm"
+                    style={{
+                      height: `${8 + i * 4}px`,
+                      background: i < Math.ceil(data.playCount / MAX_PLAY * 5) ? color.neon : '#1a1a2e',
+                      boxShadow: i < Math.ceil(data.playCount / MAX_PLAY * 5) ? `0 0 4px ${color.neon}` : 'none',
+                    }}
+                  />
+                ))}
+              </div>
+              <span className="text-gray-600 text-[10px] uppercase tracking-wider">Building Height</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
