@@ -1,13 +1,20 @@
-import { Suspense, useState, useRef, useCallback } from 'react'
+import { Suspense, useState, useRef, useCallback, useMemo } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
-import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing'
+import { EffectComposer, Bloom, Vignette, ChromaticAberration } from '@react-three/postprocessing'
+import { BlendFunction } from 'postprocessing'
 import * as THREE from 'three'
 import { buildDistrictData } from '../../data/musicData'
+import { computeStreetLayout } from './Buildings'
 import Buildings from './Buildings'
 import District from './District'
 import Ground from './Ground'
 import Sky from './Sky'
+import Rain from './Rain'
+import Atmosphere from './Atmosphere'
+import NeonSigns from './NeonSigns'
+import Holograms from './Holograms'
+import PowerLines from './PowerLines'
 
 /* ========== Camera Rig — single consolidated useFrame ========== */
 function CameraRig({ flyTarget, onIntroComplete }) {
@@ -96,7 +103,13 @@ function CameraRig({ flyTarget, onIntroComplete }) {
 /* ========== Main scene ========== */
 export default function CityScene({ data, onSelect, onHover }) {
   const [flyTarget, setFlyTarget] = useState(null)
-  const districts = buildDistrictData(data)
+  const districts = useMemo(() =>
+    buildDistrictData(data).map(d => ({
+      ...d,
+      streets: computeStreetLayout(d),
+    })),
+    [data]
+  )
 
   const handleSelect = useCallback((info) => {
     setFlyTarget(info)
@@ -121,15 +134,21 @@ export default function CityScene({ data, onSelect, onHover }) {
     >
       <Suspense fallback={null}>
         {/* Atmosphere */}
-        <fog attach="fog" color="#000012" near={50} far={250} />
-        <ambientLight intensity={0.06} color="#0011ff" />
-        <directionalLight position={[40, 60, -30]} intensity={0.1} color="#220066" />
-        <hemisphereLight args={['#000022', '#000008', 0.15]} />
+        <fog attach="fog" color="#000010" near={40} far={220} />
+        <ambientLight intensity={0.05} color="#0011ff" />
+        <directionalLight position={[40, 60, -30]} intensity={0.08} color="#220066" />
+        <hemisphereLight args={['#000022', '#000008', 0.12]} />
 
-        {/* Low fog plane — static, no useFrame */}
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 4, 0]}>
+        {/* Low fog plane — gives depth at street level */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 3, 0]}>
           <planeGeometry args={[500, 500]} />
-          <meshBasicMaterial color="#0a0020" transparent opacity={0.12} depthWrite={false} />
+          <meshBasicMaterial color="#080020" transparent opacity={0.15} depthWrite={false} />
+        </mesh>
+
+        {/* Mid-level haze — adds cinematic layering */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 12, 0]}>
+          <planeGeometry args={[500, 500]} />
+          <meshBasicMaterial color="#050015" transparent opacity={0.06} depthWrite={false} />
         </mesh>
 
         {/* Scene */}
@@ -140,11 +159,19 @@ export default function CityScene({ data, onSelect, onHover }) {
           <District key={d.genre} {...d} />
         ))}
 
+        {/* Atmospheric effects */}
+        <Rain />
+        <Atmosphere />
+        <NeonSigns districts={districts} />
+        <Holograms />
+        <PowerLines districts={districts} />
+
         <CameraRig flyTarget={flyTarget} onIntroComplete={() => {}} />
 
         {/* Post-processing — bloom is essential for the neon aesthetic */}
         <EffectComposer>
-          <Bloom intensity={1.4} luminanceThreshold={0.15} luminanceSmoothing={0.9} mipmapBlur />
+          <Bloom intensity={1.6} luminanceThreshold={0.08} luminanceSmoothing={0.9} mipmapBlur radius={0.85} />
+          <ChromaticAberration blendFunction={BlendFunction.NORMAL} offset={new THREE.Vector2(0.0008, 0.0008)} />
           <Vignette eskil={false} offset={0.1} darkness={0.8} />
         </EffectComposer>
       </Suspense>

@@ -43,9 +43,9 @@ export default function App() {
                 {hovered.genre} District
               </div>
               <div className="text-white text-lg font-bold tracking-tight" style={{ textShadow: `0 0 20px ${hoveredColor}44` }}>
-                {hovered.artist}
+                {hovered.song || hovered.artist}
               </div>
-              <div className="text-gray-600 text-xs">{hovered.playCount.toLocaleString()} plays</div>
+              <div className="text-gray-500 text-xs">{hovered.artist} &middot; {hovered.playCount.toLocaleString()} plays</div>
             </div>
           )}
         </div>

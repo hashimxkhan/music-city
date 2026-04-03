@@ -59,22 +59,22 @@ export default function InfoPanel({ data, onClose }) {
             {data.genre}
           </div>
 
-          {/* Artist name */}
+          {/* Song name */}
           <h2
-            className="text-2xl font-black tracking-tight mb-1"
+            className="text-xl font-black tracking-tight mb-0.5"
             style={{
               color: '#ffffff',
               textShadow: `0 0 30px ${color.neon}55`,
             }}
           >
-            {data.artist}
+            {data.song || data.topTrack}
           </h2>
 
-          {/* Top track */}
-          <p className="text-sm text-gray-500 mb-5">
-            Top Track:{' '}
-            <span className="font-medium" style={{ color: color.neon }}>
-              {data.topTrack}
+          {/* Artist */}
+          <p className="text-sm text-gray-400 mb-4">
+            by{' '}
+            <span className="font-semibold" style={{ color: color.neon }}>
+              {data.artist}
             </span>
           </p>
 

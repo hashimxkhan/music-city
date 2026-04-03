@@ -9,14 +9,51 @@ export default function Sky() {
       <Moons />
       <DistantSkyline />
       <SkyDome />
+      <SkyDrones />
     </group>
   )
 }
 
-/* ========== 1000 stars, single Points, slow rotation only ========== */
+/* ========== Distant animated drones / sky lights ========== */
+function SkyDrones() {
+  const ref = useRef()
+  const drones = useMemo(() => [
+    { radius: 80, y: 55, speed: 0.08, offset: 0, color: '#ff3366' },
+    { radius: 100, y: 70, speed: -0.05, offset: 2, color: '#00ffaa' },
+    { radius: 60, y: 80, speed: 0.12, offset: 4, color: '#4488ff' },
+  ], [])
+
+  useFrame((state) => {
+    if (!ref.current) return
+    const t = state.clock.getElapsedTime()
+    ref.current.children.forEach((child, i) => {
+      const d = drones[i]
+      if (!d) return
+      const angle = t * d.speed + d.offset
+      child.position.set(
+        Math.cos(angle) * d.radius,
+        d.y + Math.sin(t * 0.3 + i) * 3,
+        Math.sin(angle) * d.radius
+      )
+    })
+  })
+
+  return (
+    <group ref={ref}>
+      {drones.map((d, i) => (
+        <mesh key={i}>
+          <sphereGeometry args={[0.6, 6, 6]} />
+          <meshBasicMaterial color={d.color} toneMapped={false} />
+        </mesh>
+      ))}
+    </group>
+  )
+}
+
+/* ========== 800 stars, single Points, slow rotation only ========== */
 function StarField() {
   const ref = useRef()
-  const count = 1000
+  const count = 800
 
   const positions = useMemo(() => {
     const pos = new Float32Array(count * 3)
@@ -85,22 +122,22 @@ function Moons() {
   )
 }
 
-/* ========== Distant skyline — single InstancedMesh ========== */
+/* ========== Distant skyline — denser, taller, more dramatic ========== */
 function DistantSkyline() {
   const ref = useRef()
-  const count = 80
+  const count = 140
 
   const data = useMemo(() => {
     const arr = []
-    const radius = 180
     for (let i = 0; i < count; i++) {
       const angle = (i / count) * Math.PI * 2
-      const r = radius + (Math.random() - 0.5) * 30
-      const h = 2 + Math.random() * 12
-      const w = 0.8 + Math.random() * 2
+      const ring = i % 3 // 3 concentric rings
+      const radius = 160 + ring * 25 + (Math.random() - 0.5) * 15
+      const h = 3 + Math.random() * 18 + (ring === 2 ? 5 : 0)
+      const w = 0.6 + Math.random() * 2.5
       arr.push({
-        pos: [Math.cos(angle) * r, h / 2, Math.sin(angle) * r],
-        scale: [w, h, w * 0.6],
+        pos: [Math.cos(angle) * radius, h / 2, Math.sin(angle) * radius],
+        scale: [w, h, w * 0.5],
       })
     }
     return arr
@@ -123,13 +160,17 @@ function DistantSkyline() {
     <>
       <instancedMesh ref={ref} args={[null, null, count]} frustumCulled={false}>
         <boxGeometry args={[1, 1, 1]} />
-        <meshBasicMaterial color="#1100aa" transparent opacity={0.05} depthWrite={false} />
+        <meshBasicMaterial color="#1100aa" transparent opacity={0.07} depthWrite={false} />
       </instancedMesh>
 
-      {/* Horizon glow ring */}
+      {/* Horizon glow — layered rings for depth */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.5, 0]}>
-        <ringGeometry args={[160, 220, 64]} />
-        <meshBasicMaterial color="#110033" transparent opacity={0.15} depthWrite={false} />
+        <ringGeometry args={[140, 230, 64]} />
+        <meshBasicMaterial color="#0a0030" transparent opacity={0.2} depthWrite={false} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 1, 0]}>
+        <ringGeometry args={[150, 200, 64]} />
+        <meshBasicMaterial color="#1a0050" transparent opacity={0.08} depthWrite={false} />
       </mesh>
     </>
   )
